@@ -4,6 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 function main() {
     const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+    //renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(window.devicePixelRatio);
 
     const scene = new THREE.Scene();
@@ -16,12 +17,12 @@ function main() {
     controls.target.set(0, 0, 0);
     controls.update();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
-    scene.add(ambientLight);
+    // const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+    // scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    directionalLight.position.set(10, 20, 15);
-    scene.add(directionalLight);
+    // const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    // directionalLight.position.set(10, 20, 15);
+    // scene.add(directionalLight);
 
     const modelContainer = new THREE.Group();
     modelContainer.scale.set(-1, 1, 1);
@@ -66,6 +67,7 @@ async function loadModelAndTexture(parentGroup) {
             textureLoader.loadAsync("texture.png"),
             fileLoader.loadAsync("model.json"),
         ]);
+        texture.colorSpace = THREE.SRGBColorSpace;
 
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.NearestFilter;
@@ -107,17 +109,13 @@ async function loadModelAndTexture(parentGroup) {
             const pivot = boneData.pivot || [0, 0, 0];
             const rotation = boneData.rotation || [0, 0, 0];
             pivot[0] *= -1;
-            rotation[1] *= -1;
-            rotation[2] *= -1;
             boneGroup.position.set(pivot[0], pivot[1], pivot[2]);
-
-            if (boneData.rotation) {
-                boneGroup.rotation.set(
-                    THREE.MathUtils.degToRad(rotation[0]),
-                    THREE.MathUtils.degToRad(rotation[1]),
-                    THREE.MathUtils.degToRad(rotation[2])
-                );
-            }
+            boneGroup.rotation.order = "ZYX";
+            boneGroup.rotation.set(
+                THREE.MathUtils.degToRad(rotation[0]),
+                THREE.MathUtils.degToRad(rotation[1]),
+                THREE.MathUtils.degToRad(rotation[2])
+            );
 
             if (boneData.cubes) {
                 for (const cubeData of boneData.cubes) {
@@ -138,13 +136,13 @@ async function loadModelAndTexture(parentGroup) {
                     let material;
 
                     if (isOuterLayer) {
-                        material = new THREE.MeshLambertMaterial({
+                        material = new THREE.MeshBasicMaterial({
                             map: texture,
                             transparent: true,
                             depthWrite: false,
                         });
                     } else {
-                        material = new THREE.MeshLambertMaterial({
+                        material = new THREE.MeshBasicMaterial({
                             map: texture,
                         });
                     }
