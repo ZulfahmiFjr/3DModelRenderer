@@ -98,8 +98,6 @@ async function loadModelAndTexture(parentGroup) {
         //         b.name === "jacket"
         // );
         const bonesToRender = geo.bones;
-        const boneNames = new Set(bonesToRender.map((b) => b.name));
-        const boneMap = {};
 
         for (const boneData of bonesToRender) {
             const boneGroup = new THREE.Group();
@@ -107,13 +105,17 @@ async function loadModelAndTexture(parentGroup) {
             allBones.set(boneData.name, boneGroup);
 
             const pivot = boneData.pivot || [0, 0, 0];
+            const rotation = boneData.rotation || [0, 0, 0];
+            pivot[0] *= -1;
+            rotation[1] *= -1;
+            rotation[2] *= -1;
             boneGroup.position.set(pivot[0], pivot[1], pivot[2]);
 
             if (boneData.rotation) {
                 boneGroup.rotation.set(
-                    THREE.MathUtils.degToRad(-boneData.rotation[0]),
-                    THREE.MathUtils.degToRad(-boneData.rotation[1]),
-                    THREE.MathUtils.degToRad(boneData.rotation[2])
+                    THREE.MathUtils.degToRad(rotation[0]),
+                    THREE.MathUtils.degToRad(rotation[1]),
+                    THREE.MathUtils.degToRad(rotation[2])
                 );
             }
 
@@ -121,12 +123,9 @@ async function loadModelAndTexture(parentGroup) {
                 for (const cubeData of boneData.cubes) {
                     const inflate = cubeData.inflate || 0;
                     const size = cubeData.size;
-                    const origin = [
-                        cubeData.origin[0] - inflate,
-                        cubeData.origin[1] - inflate,
-                        cubeData.origin[2] - inflate,
-                    ];
-
+                    let origin = cubeData.origin || [0, 0, 0];
+                    origin[0] = -(origin[0] + size[0]);
+                    const finalOrigin = [origin[0] - inflate, origin[1] - inflate, origin[2] - inflate];
                     const geometry = new THREE.BoxGeometry(
                         size[0] + inflate * 2,
                         size[1] + inflate * 2,
@@ -152,9 +151,9 @@ async function loadModelAndTexture(parentGroup) {
                     const mesh = new THREE.Mesh(geometry, material);
 
                     mesh.position.set(
-                        origin[0] - pivot[0] + (size[0] + inflate * 2) / 2,
-                        origin[1] - pivot[1] + (size[1] + inflate * 2) / 2,
-                        origin[2] - pivot[2] + (size[2] + inflate * 2) / 2
+                        finalOrigin[0] - pivot[0] + (size[0] + inflate * 2) / 2,
+                        finalOrigin[1] - pivot[1] + (size[1] + inflate * 2) / 2,
+                        finalOrigin[2] - pivot[2] + (size[2] + inflate * 2) / 2
                     );
 
                     boneGroup.add(mesh);
@@ -167,15 +166,17 @@ async function loadModelAndTexture(parentGroup) {
             if (boneData.parent && allBones.has(boneData.parent)) {
                 const parentBone = allBones.get(boneData.parent);
                 const parentData = bonesToRender.find((b) => b.name === boneData.parent);
-                const parentPivot = parentData.pivot || [0, 0, 0];
-                const childPivot = boneData.pivot || [0, 0, 0];
-                bone.position.set(
-                    childPivot[0] - parentPivot[0],
-                    childPivot[1] - parentPivot[1],
-                    childPivot[2] - parentPivot[2]
-                );
-
-                parentBone.add(bone);
+                if (parentData) {
+                    let parentPivot = parentData.pivot || [0, 0, 0];
+                    let childPivot = boneData.pivot || [0, 0, 0];
+                    //parentPivot[0] *= -1;
+                    bone.position.set(
+                        childPivot[0] - parentPivot[0],
+                        childPivot[1] - parentPivot[1],
+                        childPivot[2] - parentPivot[2]
+                    );
+                    parentBone.add(bone);
+                }
             } else {
                 parentGroup.add(bone);
             }
