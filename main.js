@@ -205,8 +205,8 @@ function applyUvToCube(geometry, cubeData, texWidth, texHeight) {
     if (mirror) {
         [faces[0], faces[1]] = [faces[1], faces[0]];
     }
-    const uvInsetX = 0.5 / texWidth;
-    const uvInsetY = 0.5 / texHeight;
+    const uvInsetX = 0.1 / texWidth;
+    const uvInsetY = 0.1 / texHeight;
 
     for (let i = 0; i < 6; i++) {
         const [u, v, fw, fh] = faces[i];
