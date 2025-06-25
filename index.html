@@ -4,9 +4,15 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="google-site-verification" content="6XsekYSnrTKEjpIYOTa_YR50zl-dj4neqh1NeEKJlJI" />
-        <meta name="description" content="3D Model Renderer - View and interact with 3D models in the browser. Built with WebGL/Three.js.">
-        <meta name="keywords" content="3D model, WebGL viewer, 3D viewer online, 3D renderer, three.js, online 3D model renderer, Minecraft Skin Renderer, Minecraft 3D Model Renderer">
-        <meta name="author" content="Zulfahmi Fajri">
+        <meta
+            name="description"
+            content="3D Model Renderer - View and interact with 3D models in the browser. Built with WebGL/Three.js."
+        />
+        <meta
+            name="keywords"
+            content="3D model, WebGL viewer, 3D viewer online, 3D renderer, three.js, online 3D model renderer, Minecraft Skin Renderer, Minecraft 3D Model Renderer"
+        />
+        <meta name="author" content="Zulfahmi Fajri" />
         <title>3D Model Renderer</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -43,6 +49,10 @@
                 <label class="group-label">Model Texture</label>
                 <label for="textureFile" class="file-trigger" id="textureFile-label">Select File (.png)...</label>
                 <input type="file" id="textureFile" accept=".png" />
+            </div>
+            <div id="geometry-selector-group" class="control-group hidden">
+                <label class="group-label" for="geometrySelector">Select Geometry</label>
+                <select id="geometrySelector" class="geometry-selector"></select>
             </div>
             <div class="control-group">
                 <button id="loadBtn" class="action-button">Load Model</button>
