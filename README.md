@@ -4,8 +4,10 @@ An interactive webbased tool built to load and display geometry 3d models from M
 
 🌐 **[Live Demo](https://zulfahmifjr.github.io/3DModelRenderer/)**
 
-Here’s an example of a Sniffer model rendered inside the viewer.
-![picture 0](https://raw.githubusercontent.com/ZulfahmiFajri/ProgDas/main/caches/646401a26a5b7c917479b5d9965620d0f30ed25fa0a7b6c5ee0247abeba2e027.png)
+Here’s an example of a Sniffer and Player model rendered inside the viewer.
+![picture 0](https://raw.githubusercontent.com/ZulfahmiFajri/ProgDas/main/caches/54654d8342be2414afa8cab3eddb83e939ee55dc752c97404f058cee028f1895.png)
+
+![picture 1](https://raw.githubusercontent.com/ZulfahmiFajri/ProgDas/main/caches/62f3e465b12f85a630f3b898064ec42f2ef706a37f769107789511341fda6877.png)
 
 ---
 
