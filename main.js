@@ -3,7 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 function main() {
     const canvas = document.querySelector("#c");
-    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, preserveDrawingBuffer: true });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -35,6 +35,101 @@ function main() {
     scene.add(modelContainer);
 
     loadModelAndTexture(modelContainer);
+
+    function takeScreenshot() {
+        const originalCamPos = camera.position.clone();
+        const originalTarget = controls.target.clone();
+        const originalBackground = scene.background ? scene.background.clone() : null;
+        gridHelper.visible = false;
+        largeGridHelper.visible = false;
+        scene.background = null;
+        renderer.setClearAlpha(0);
+        const box = new THREE.Box3().setFromObject(modelContainer);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const maxSize = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxSize / 1.5 / Math.tan(fov / 2));
+        cameraZ *= 1.5;
+        camera.position.set(center.x - cameraZ * 0.6, center.y + cameraZ * 0.4, center.z + cameraZ);
+        controls.target.copy(center);
+        controls.update();
+        renderer.render(scene, camera);
+        const mainCanvas = renderer.domElement;
+        const context =
+            mainCanvas.getContext("webgl2", { preserveDrawingBuffer: true }) ||
+            mainCanvas.getContext("webgl", { preserveDrawingBuffer: true });
+        const pixels = new Uint8Array(context.drawingBufferWidth * context.drawingBufferHeight * 4);
+        context.readPixels(
+            0,
+            0,
+            context.drawingBufferWidth,
+            context.drawingBufferHeight,
+            context.RGBA,
+            context.UNSIGNED_BYTE,
+            pixels
+        );
+        let top = context.drawingBufferHeight,
+            left = context.drawingBufferWidth,
+            right = 0,
+            bottom = 0;
+        for (let y = 0; y < context.drawingBufferHeight; y++) {
+            for (let x = 0; x < context.drawingBufferWidth; x++) {
+                const alpha = pixels[(y * context.drawingBufferWidth + x) * 4 + 3];
+                if (alpha > 0) {
+                    top = Math.min(top, y);
+                    left = Math.min(left, x);
+                    right = Math.max(right, x);
+                    bottom = Math.max(bottom, y);
+                }
+            }
+        }
+
+        const cropWidth = right - left + 1;
+        const cropHeight = bottom - top + 1;
+
+        if (cropWidth <= 0 || cropHeight <= 0) {
+            gridHelper.visible = true;
+            largeGridHelper.visible = true;
+            scene.background = originalBackground;
+            renderer.setClearAlpha(1);
+            alert("Model tidak yang terlihat untuk discreenshot.");
+            return;
+        }
+        const cropCanvas = document.createElement("canvas");
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        const cropCtx = cropCanvas.getContext("2d");
+        const imageData = new ImageData(
+            new Uint8ClampedArray(pixels),
+            context.drawingBufferWidth,
+            context.drawingBufferHeight
+        );
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = context.drawingBufferWidth;
+        tempCanvas.height = context.drawingBufferHeight;
+        tempCanvas.getContext("2d").putImageData(imageData, 0, 0);
+        cropCtx.translate(0, cropHeight);
+        cropCtx.scale(1, -1);
+        cropCtx.drawImage(tempCanvas, left, top, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+        const dataURL = cropCanvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = "model_screenshot.png";
+        link.href = dataURL;
+        link.click();
+
+        camera.position.copy(originalCamPos);
+        controls.target.copy(originalTarget);
+        controls.update();
+        gridHelper.visible = true;
+        largeGridHelper.visible = true;
+        scene.background = originalBackground;
+        renderer.setClearAlpha(1);
+    }
+
+    const screenshotBtn = document.getElementById("screenshotBtn");
+    screenshotBtn.addEventListener("click", takeScreenshot);
 
     function animate() {
         requestAnimationFrame(animate);
