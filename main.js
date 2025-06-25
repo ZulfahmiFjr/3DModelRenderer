@@ -4,7 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 function main() {
     const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-    //renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(window.devicePixelRatio);
 
     const scene = new THREE.Scene();
@@ -17,12 +17,12 @@ function main() {
     controls.target.set(0, 0, 0);
     controls.update();
 
-    // const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
-    // scene.add(ambientLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+    scene.add(ambientLight);
 
-    // const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    // directionalLight.position.set(10, 20, 15);
-    // scene.add(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    directionalLight.position.set(10, 20, 15);
+    scene.add(directionalLight);
 
     const modelContainer = new THREE.Group();
     modelContainer.scale.set(-1, 1, 1);
@@ -88,16 +88,15 @@ async function loadModelAndTexture(parentGroup) {
 
         // const bonesToRender = geo.bones.filter(
         //     (b) =>
-        //         b.name === "root" ||
-        //         b.name === "waist" ||
-        //         b.name === "body" ||
-        //         b.name === "head" ||
-        //         b.name === "hat" ||
-        //         b.name === "leftArm" ||
-        //         b.name === "leftSleeve" ||
-        //         b.name === "rightArm" ||
-        //         b.name === "rightSleeve" ||
-        //         b.name === "jacket"
+        //         // b.name === "root" ||
+        //         // b.name === "waist" ||
+        //         b.name === "head" || b.name === "lower_beak" //||
+        //     //     b.name === "hat" ||
+        //     //     b.name === "leftArm" ||
+        //     //     b.name === "leftSleeve" ||
+        //     //     b.name === "rightArm" ||
+        //     //     b.name === "rightSleeve" ||
+        //     //     b.name === "jacket"
         // );
         const bonesToRender = geo.bones;
 
@@ -121,8 +120,12 @@ async function loadModelAndTexture(parentGroup) {
                 for (const cubeData of boneData.cubes) {
                     const inflate = cubeData.inflate || 0;
                     const size = cubeData.size;
+                    if (size[0] === 0) size[0] = 0.01;
+                    if (size[1] === 0) size[1] = 0.01;
+                    if (size[2] === 0) size[2] = 0.01;
                     let origin = cubeData.origin || [0, 0, 0];
                     origin[0] = -(origin[0] + size[0]);
+                    origin[2] = -(origin[2] + size[2]);
                     const finalOrigin = [origin[0] - inflate, origin[1] - inflate, origin[2] - inflate];
                     const geometry = new THREE.BoxGeometry(
                         size[0] + inflate * 2,
@@ -131,22 +134,31 @@ async function loadModelAndTexture(parentGroup) {
                     );
 
                     applyUvToCube(geometry, cubeData, textureWidth, textureHeight);
-
                     const isOuterLayer = inflate > 0;
                     let material;
 
                     if (isOuterLayer) {
-                        material = new THREE.MeshBasicMaterial({
+                        material = new THREE.MeshLambertMaterial({
                             map: texture,
                             transparent: true,
+                            side: THREE.DoubleSide,
                             depthWrite: false,
+                            alphaTest: 0.5,
                         });
                     } else {
-                        material = new THREE.MeshBasicMaterial({
+                        material = new THREE.MeshLambertMaterial({
                             map: texture,
+                            transparent: true,
+                            side: THREE.DoubleSide,
+                            alphaTest: 0.5,
                         });
                     }
                     const mesh = new THREE.Mesh(geometry, material);
+                    if (isOuterLayer) {
+                        mesh.renderOrder = 1;
+                    } else {
+                        mesh.renderOrder = 0;
+                    }
 
                     mesh.position.set(
                         finalOrigin[0] - pivot[0] + (size[0] + inflate * 2) / 2,
