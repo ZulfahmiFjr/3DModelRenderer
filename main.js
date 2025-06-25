@@ -4,7 +4,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 function main() {
     const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, preserveDrawingBuffer: true });
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if (renderer.outputColorSpace) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else {
+        renderer.outputEncoding = THREE.sRGBEncoding;
+    }
     renderer.setPixelRatio(window.devicePixelRatio);
 
     const scene = new THREE.Scene();
@@ -34,7 +38,44 @@ function main() {
     //modelContainer.rotation.z = Math.PI;
     scene.add(modelContainer);
 
-    loadModelAndTexture(modelContainer);
+    const jsonInput = document.getElementById("jsonFile");
+    const textureInput = document.getElementById("textureFile");
+    const loadBtn = document.getElementById("loadBtn");
+
+    let modelJsonText = null;
+    let textureDataURL = null;
+
+    jsonInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            modelJsonText = e.target.result;
+            console.log("File model.json dimuat.");
+        };
+        reader.readAsText(file);
+    });
+
+    textureInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            textureDataURL = e.target.result;
+            console.log("File texture.png dimuat.");
+        };
+        reader.readAsDataURL(file);
+    });
+
+    loadBtn.addEventListener("click", () => {
+        if (modelJsonText && textureDataURL) {
+            loadModelAndTexture(modelContainer, modelJsonText, textureDataURL);
+        } else {
+            alert("Harap pilih file model.json dan texture.png terlebih dahulu.");
+        }
+    });
+
+    // loadModelAndTexture(modelContainer);
 
     function takeScreenshot() {
         const originalCamPos = camera.position.clone();
@@ -93,7 +134,7 @@ function main() {
             largeGridHelper.visible = true;
             scene.background = originalBackground;
             renderer.setClearAlpha(1);
-            alert("Model tidak yang terlihat untuk discreenshot.");
+            alert("Model tidak terlihat untuk discreenshot.");
             return;
         }
         const cropCanvas = document.createElement("canvas");
@@ -158,16 +199,23 @@ function resizeRendererToDisplaySize(renderer) {
     return needResize;
 }
 
-async function loadModelAndTexture(parentGroup) {
+async function loadModelAndTexture(parentGroup, jsonText, textureDataURL) {
     try {
-        const textureLoader = new THREE.TextureLoader();
-        const fileLoader = new THREE.FileLoader();
+        while (parentGroup.children.length > 0) {
+            const child = parentGroup.children[0];
+            parentGroup.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        }
 
-        const [texture, jsonText] = await Promise.all([
-            textureLoader.loadAsync("texture.png"),
-            fileLoader.loadAsync("model.json"),
-        ]);
-        texture.colorSpace = THREE.SRGBColorSpace;
+        const textureLoader = new THREE.TextureLoader();
+
+        const texture = await textureLoader.loadAsync(textureDataURL);
+        if (texture.colorSpace) {
+            texture.colorSpace = THREE.SRGBColorSpace;
+        } else {
+            texture.encoding = THREE.sRGBEncoding;
+        }
 
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.NearestFilter;

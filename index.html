@@ -3,12 +3,23 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Minecraft Model Viewer</title>
+        <title>3D Model Renderer</title>
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
         <canvas id="c"></canvas>
-
+        <div class="controls">
+            <div>
+                <label for="jsonFile">Pilih model.json:</label>
+                <input type="file" id="jsonFile" accept=".json" />
+            </div>
+            <div>
+                <label for="textureFile">Pilih texture.png:</label>
+                <input type="file" id="textureFile" accept=".png" />
+            </div>
+            <button id="loadBtn">Muat Model</button>
+            <button id="screenshotBtn">Ambil Screenshot</button>
+        </div>
         <script type="importmap">
             {
                 "imports": {
@@ -19,8 +30,8 @@
         </script>
 
         <script type="module" src="main.js"></script>
-        <button id="screenshotBtn" style="position: absolute; top: 10px; left: 10px; z-index: 10">
+        <!-- <button id="screenshotBtn" style="position: absolute; top: 10px; left: 10px; z-index: 10">
             Ambil Screenshot
-        </button>
+        </button> -->
     </body>
 </html>
