@@ -113,7 +113,8 @@ body {
     display: none;
 }
 
-.file-trigger {
+.file-trigger,
+.geometry-selector {
     padding: 10px 14px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -128,7 +129,8 @@ body {
     text-overflow: ellipsis;
 }
 
-.file-trigger:hover {
+.file-trigger:hover,
+.geometry-selector:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -150,6 +152,20 @@ body {
 
 .controls .action-button:active {
     transform: scale(0.97);
+}
+
+.control-group.hidden {
+    display: none;
+}
+
+.geometry-selector {
+    text-align: center;
+}
+
+.geometry-selector option {
+    background: #3a3a3c;
+    color: #f5f5f7;
+    text-align: center;
 }
 
 #loadBtn {
