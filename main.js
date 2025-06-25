@@ -23,6 +23,11 @@ function main() {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
     directionalLight.position.set(10, 20, 15);
     scene.add(directionalLight);
+    const gridHelper = new THREE.GridHelper(32, 32, 0x888888, 0x444444);
+    scene.add(gridHelper);
+
+    const largeGridHelper = new THREE.GridHelper(160, 10, 0x555555, 0x333333);
+    scene.add(largeGridHelper);
 
     const modelContainer = new THREE.Group();
     modelContainer.scale.set(-1, 1, 1);
