@@ -42,17 +42,25 @@ function main() {
     const controlsPanel = document.getElementById("controls-panel");
     const menuToggleBtn = document.getElementById("menu-toggle");
     const closeControlsBtn = document.getElementById("close-controls");
-    let modelJsonText = null;
+    const geometrySelectorGroup = document.getElementById("geometry-selector-group");
+    const geometrySelector = document.getElementById("geometrySelector");
+    let modelData = null;
     let textureDataURL = null;
 
     jsonInput.addEventListener("change", (event) => {
         const file = event.target.files[0];
         if (!file) return;
         jsonFileLabel.textContent = file.name;
+        geometrySelectorGroup.classList.add("hidden");
         const reader = new FileReader();
         reader.onload = (e) => {
-            modelJsonText = e.target.result;
-            console.log("File model.json dimuat.");
+            try {
+                modelData = JSON.parse(e.target.result);
+                console.log("File model.json berhasil diparsing.");
+            } catch (err) {
+                alert("Error: File JSON tidak valid.");
+                modelData = null;
+            }
         };
         reader.readAsText(file);
     });
@@ -62,22 +70,58 @@ function main() {
         if (!file) return;
         textureFileLabel.textContent = file.name;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            textureDataURL = e.target.result;
-            console.log("File texture.png dimuat.");
-        };
+        reader.onload = (e) => (textureDataURL = e.target.result);
         reader.readAsDataURL(file);
     });
 
     loadBtn.addEventListener("click", () => {
-        if (modelJsonText && textureDataURL) {
-            loadModelAndTexture(modelContainer, modelJsonText, textureDataURL, camera, controls);
-            controlsPanel.classList.add("hidden");
-            menuToggleBtn.classList.remove("hidden");
-        } else {
+        if (!modelData || !textureDataURL) {
             alert("Harap pilih file model.json dan texture.png terlebih dahulu.");
+            return;
+        }
+
+        const geometries = modelData["minecraft:geometry"];
+
+        if (!geometries || geometries.length === 0) {
+            alert("File JSON tidak berisi data geometri yang valid.");
+            return;
+        }
+
+        if (geometries.length === 1) {
+            geometrySelectorGroup.classList.add("hidden");
+            loadAndRender(geometries[0]);
+        } else {
+            populateGeometrySelector(geometries);
+            geometrySelectorGroup.classList.remove("hidden");
+            alert("File ini berisi beberapa model. Silakan pilih satu dari dropdown.");
         }
     });
+
+    function populateGeometrySelector(geometries) {
+        geometrySelector.innerHTML = '<option value="">-- Select Model --</option>';
+        geometries.forEach((geo, index) => {
+            const identifier = geo.description.identifier || `No Name ${index + 1}`;
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = identifier;
+            geometrySelector.appendChild(option);
+        });
+    }
+
+    geometrySelector.addEventListener("change", (event) => {
+        const selectedIndex = event.target.value;
+        if (selectedIndex !== "") {
+            const selectedGeo = modelData["minecraft:geometry"][selectedIndex];
+            loadAndRender(selectedGeo);
+        }
+    });
+
+    function loadAndRender(geo) {
+        if (!geo || !textureDataURL) return;
+        loadModelAndTexture(modelContainer, geo, textureDataURL, camera, controls);
+        controlsPanel.classList.add("hidden");
+        menuToggleBtn.classList.remove("hidden");
+    }
 
     menuToggleBtn.addEventListener("click", () => {
         controlsPanel.classList.remove("hidden");
@@ -213,7 +257,7 @@ function resizeRendererToDisplaySize(renderer) {
     return needResize;
 }
 
-async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera, controls) {
+async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, controls) {
     try {
         while (parentGroup.children.length > 0) {
             const child = parentGroup.children[0];
@@ -230,15 +274,6 @@ async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.NearestFilter;
         texture.flipY = false;
-
-        const modelData = JSON.parse(jsonText);
-        const geometries = modelData["minecraft:geometry"];
-        const geo = geometries.find((g) => g.description.identifier === "geometry.humanoid.custom");
-
-        if (!geo) {
-            alert("Model 'geometry.humanoid.custom' tidak ditemukan di file JSON.");
-            return;
-        }
 
         const textureWidth = geo.description.texture_width;
         const textureHeight = geo.description.texture_height;
@@ -263,9 +298,9 @@ async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera
             boneGroup.name = boneData.name;
             allBones.set(boneData.name, boneGroup);
 
-            const pivot = boneData.pivot || [0, 0, 0];
-            const rotation = boneData.rotation || [0, 0, 0];
-            pivot[0] *= -1;
+            const pivot = [...(boneData.pivot || [0, 0, 0])];
+            const rotation = [...(boneData.rotation || [0, 0, 0])];
+            //pivot[0] *= -1;
             boneGroup.position.set(pivot[0], pivot[1], pivot[2]);
             boneGroup.rotation.order = "ZYX";
             boneGroup.rotation.set(
@@ -277,11 +312,11 @@ async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera
             if (boneData.cubes) {
                 for (const cubeData of boneData.cubes) {
                     const inflate = cubeData.inflate || 0;
-                    const size = cubeData.size;
+                    const size = [...cubeData.size];
+                    const origin = [...(cubeData.origin || [0, 0, 0])];
                     if (size[0] === 0) size[0] = 0.01;
                     if (size[1] === 0) size[1] = 0.01;
                     if (size[2] === 0) size[2] = 0.01;
-                    let origin = cubeData.origin || [0, 0, 0];
                     origin[0] = -(origin[0] + size[0]);
                     origin[2] = -(origin[2] + size[2]);
                     const finalOrigin = [origin[0] - inflate, origin[1] - inflate, origin[2] - inflate];
