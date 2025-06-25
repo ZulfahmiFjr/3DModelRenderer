@@ -41,13 +41,18 @@ function main() {
     const jsonInput = document.getElementById("jsonFile");
     const textureInput = document.getElementById("textureFile");
     const loadBtn = document.getElementById("loadBtn");
-
+    const jsonFileLabel = document.getElementById("jsonFile-label");
+    const textureFileLabel = document.getElementById("textureFile-label");
+    const controlsPanel = document.getElementById("controls-panel");
+    const menuToggleBtn = document.getElementById("menu-toggle");
+    const closeControlsBtn = document.getElementById("close-controls");
     let modelJsonText = null;
     let textureDataURL = null;
 
     jsonInput.addEventListener("change", (event) => {
         const file = event.target.files[0];
         if (!file) return;
+        jsonFileLabel.textContent = file.name;
         const reader = new FileReader();
         reader.onload = (e) => {
             modelJsonText = e.target.result;
@@ -59,6 +64,7 @@ function main() {
     textureInput.addEventListener("change", (event) => {
         const file = event.target.files[0];
         if (!file) return;
+        textureFileLabel.textContent = file.name;
         const reader = new FileReader();
         reader.onload = (e) => {
             textureDataURL = e.target.result;
@@ -70,9 +76,21 @@ function main() {
     loadBtn.addEventListener("click", () => {
         if (modelJsonText && textureDataURL) {
             loadModelAndTexture(modelContainer, modelJsonText, textureDataURL, camera, controls);
+            controlsPanel.classList.add("hidden");
+            menuToggleBtn.classList.remove("hidden");
         } else {
             alert("Harap pilih file model.json dan texture.png terlebih dahulu.");
         }
+    });
+
+    menuToggleBtn.addEventListener("click", () => {
+        controlsPanel.classList.remove("hidden");
+        menuToggleBtn.classList.add("hidden");
+    });
+
+    closeControlsBtn.addEventListener("click", () => {
+        controlsPanel.classList.add("hidden");
+        menuToggleBtn.classList.remove("hidden");
     });
 
     // loadModelAndTexture(modelContainer);
@@ -362,7 +380,7 @@ function applyUvToCube(geometry, cubeData, texWidth, texHeight) {
     const [w, h, d] = size;
     const uvAttr = geometry.attributes.uv;
 
-    // Blockbench/BEDROCK CUBE UV MAP, urutan Three.js: right, left, top, bottom, front, back
+    // urutan Three.js: right, left, top, bottom, front, back
     let faces = [
         [uv[0], uv[1] + d, d, h], // right (+X)
         [uv[0] + d + w, uv[1] + d, d, h], // left  (-X)

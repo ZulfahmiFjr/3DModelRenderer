@@ -4,21 +4,46 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>3D Model Renderer</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
         <canvas id="c"></canvas>
-        <div class="controls">
-            <div>
-                <label for="jsonFile">Pilih model.json:</label>
+        <div id="menu-toggle" class="menu-toggle-button hidden">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6H20M4 12H20M4 18H20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+        <div id="controls-panel" class="controls">
+            <div class="controls-header">
+                <div class="title">3D Model Renderer Control</div>
+                <div id="close-controls" class="close-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M18 6L6 18M6 6L18 18"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="group-label">Model Geometry</label>
+                <label for="jsonFile" class="file-trigger" id="jsonFile-label">Pilih File (.json)...</label>
                 <input type="file" id="jsonFile" accept=".json" />
             </div>
-            <div>
-                <label for="textureFile">Pilih texture.png:</label>
+            <div class="control-group">
+                <label class="group-label">Model Texture</label>
+                <label for="textureFile" class="file-trigger" id="textureFile-label">Pilih File (.png)...</label>
                 <input type="file" id="textureFile" accept=".png" />
             </div>
-            <button id="loadBtn">Muat Model</button>
-            <button id="screenshotBtn">Ambil Screenshot</button>
+            <div class="control-group">
+                <button id="loadBtn" class="action-button">Muat Model</button>
+                <button id="screenshotBtn" class="action-button">Ambil Screenshot</button>
+            </div>
         </div>
         <script type="importmap">
             {
