@@ -4,11 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 function main() {
     const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, preserveDrawingBuffer: true });
-    if (renderer.outputColorSpace) {
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-    } else {
-        renderer.outputEncoding = THREE.sRGBEncoding;
-    }
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(window.devicePixelRatio);
 
     const scene = new THREE.Scene();
@@ -229,11 +225,7 @@ async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera
         const textureLoader = new THREE.TextureLoader();
 
         const texture = await textureLoader.loadAsync(textureDataURL);
-        if (texture.colorSpace) {
-            texture.colorSpace = THREE.SRGBColorSpace;
-        } else {
-            texture.encoding = THREE.sRGBEncoding;
-        }
+        texture.colorSpace = THREE.SRGBColorSpace;
 
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.NearestFilter;
