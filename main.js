@@ -69,7 +69,7 @@ function main() {
 
     loadBtn.addEventListener("click", () => {
         if (modelJsonText && textureDataURL) {
-            loadModelAndTexture(modelContainer, modelJsonText, textureDataURL);
+            loadModelAndTexture(modelContainer, modelJsonText, textureDataURL, camera, controls);
         } else {
             alert("Harap pilih file model.json dan texture.png terlebih dahulu.");
         }
@@ -199,7 +199,7 @@ function resizeRendererToDisplaySize(renderer) {
     return needResize;
 }
 
-async function loadModelAndTexture(parentGroup, jsonText, textureDataURL) {
+async function loadModelAndTexture(parentGroup, jsonText, textureDataURL, camera, controls) {
     try {
         while (parentGroup.children.length > 0) {
             const child = parentGroup.children[0];
@@ -339,6 +339,18 @@ async function loadModelAndTexture(parentGroup, jsonText, textureDataURL) {
                 parentGroup.add(bone);
             }
         }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const box = new THREE.Box3().setFromObject(parentGroup);
+        if (box.isEmpty()) return;
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const fov = camera.fov * (Math.PI / 180);
+        const diagonal = size.length();
+        let cameraDist = diagonal / 2 / Math.tan(fov / 2);
+        cameraDist *= 1.2;
+        camera.position.set(center.x - cameraDist * 0.5, center.y + cameraDist * 0.5, center.z + cameraDist * 0.5);
+        controls.target.copy(center);
+        controls.update();
     } catch (error) {
         console.error("Gagal memuat model:", error);
         alert("Terjadi error saat memuat model. Cek console (F12) untuk detail.");
