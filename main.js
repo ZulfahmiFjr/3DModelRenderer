@@ -34,6 +34,38 @@ function main() {
     //modelContainer.rotation.z = Math.PI;
     scene.add(modelContainer);
 
+    let selectionBoxHelper = null;
+    let dragControls;
+    function initDragControls(draggableObjects) {
+        if (dragControls) {
+            dragControls.dispose();
+        }
+        dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
+        dragControls.addEventListener("dragstart", function (event) {
+            orbitControls.enabled = false;
+            if (selectionBoxHelper) {
+                scene.remove(selectionBoxHelper);
+                selectionBoxHelper.dispose();
+            }
+            selectionBoxHelper = new THREE.BoxHelper(event.object, 0xffff00); // warna kuning
+            scene.add(selectionBoxHelper);
+        });
+        dragControls.addEventListener("dragend", function (event) {
+            orbitControls.enabled = true;
+            if (selectionBoxHelper) {
+                scene.remove(selectionBoxHelper);
+                selectionBoxHelper.dispose();
+                selectionBoxHelper = null;
+            }
+        });
+
+        dragControls.addEventListener("drag", function (event) {
+            if (selectionBoxHelper) {
+                selectionBoxHelper.update();
+            }
+        });
+    }
+
     const jsonInput = document.getElementById("jsonFile");
     const textureInput = document.getElementById("textureFile");
     const loadBtn = document.getElementById("loadBtn");
