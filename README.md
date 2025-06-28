@@ -2,7 +2,7 @@
 
 An interactive webbased tool built to load and display geometry 3d models from Minecraft Bedrock Edition right in your browser. This project was developed from scratch using Three.js and tackles several rendering challenges to faithfully reproduce models as they appear in Blockbench.
 
-🌐 **[Live Demo](https://zulfahmifjr.github.io/3DModelRenderer/)**
+🌐 **[Live Demo](https://ZulfahmiFjr.github.io/3DModelRenderer/)**
 
 Here’s an example of a Sniffer and Player model rendered inside the viewer.
 ![picture 0](https://raw.githubusercontent.com/ZulfahmiFajri/ProgDas/main/caches/31f85b3217c70ff468486f104fe668d004d268e4e98af5f3d1b8dd4dde41696e.png)
@@ -53,7 +53,7 @@ Here’s an example of a Sniffer and Player model rendered inside the viewer.
 
 ## 🛠️ How to Use
 
-1. Open the [live demo](https://zulfahmifjr.github.io/3DModelRenderer/).
+1. Open the [live demo](https://ZulfahmiFjr.github.io/3DModelRenderer/).
 2. In the topleft control panel, choose your files:
 
     - **Model Geometry**: Select your `model.json`.
