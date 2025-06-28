@@ -62,6 +62,9 @@ function main() {
         });
 
         dragControls.addEventListener("drag", function (event) {
+            event.object.position.x = Math.round(event.object.position.x);
+            event.object.position.y = Math.round(event.object.position.y);
+            event.object.position.z = Math.round(event.object.position.z);
             if (selectionBoxHelper) {
                 selectionBoxHelper.update();
             }
