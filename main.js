@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { DragControls } from "three/addons/controls/DragControls.js";
 
 function main() {
     const canvas = document.querySelector("#c");
@@ -38,11 +39,12 @@ function main() {
     let dragControls;
     function initDragControls(draggableObjects) {
         if (dragControls) {
+            dragControls.deactivate();
             dragControls.dispose();
         }
         dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
         dragControls.addEventListener("dragstart", function (event) {
-            orbitControls.enabled = false;
+            controls.enabled = false;
             if (selectionBoxHelper) {
                 scene.remove(selectionBoxHelper);
                 selectionBoxHelper.dispose();
@@ -51,7 +53,7 @@ function main() {
             scene.add(selectionBoxHelper);
         });
         dragControls.addEventListener("dragend", function (event) {
-            orbitControls.enabled = true;
+            controls.enabled = true;
             if (selectionBoxHelper) {
                 scene.remove(selectionBoxHelper);
                 selectionBoxHelper.dispose();
@@ -121,7 +123,7 @@ function main() {
 
         if (geometries.length === 1) {
             geometrySelectorGroup.classList.add("hidden");
-            loadAndRender(geometries[0]);
+            loadAndRender(geometries[0], textureDataURL);
         } else {
             populateGeometrySelector(geometries);
             geometrySelectorGroup.classList.remove("hidden");
@@ -138,19 +140,27 @@ function main() {
             option.textContent = identifier;
             geometrySelector.appendChild(option);
         });
+        geometrySelector.onchange = (event) => {
+            const selectedIndex = event.target.value;
+            if (selectedIndex !== "") {
+                const selectedGeo = geometries[selectedIndex];
+                loadAndRender(selectedGeo, textureUrl);
+            }
+        };
     }
 
-    geometrySelector.addEventListener("change", (event) => {
-        const selectedIndex = event.target.value;
-        if (selectedIndex !== "") {
-            const selectedGeo = modelData["minecraft:geometry"][selectedIndex];
-            loadAndRender(selectedGeo);
-        }
-    });
+    // geometrySelector.addEventListener("change", (event) => {
+    //     const selectedIndex = event.target.value;
+    //     if (selectedIndex !== "") {
+    //         const selectedGeo = modelData["minecraft:geometry"][selectedIndex];
+    //         loadAndRender(selectedGeo);
+    //     }
+    // });
 
-    function loadAndRender(geo) {
-        if (!geo || !textureDataURL) return;
-        loadModelAndTexture(modelContainer, geo, textureDataURL, camera, controls);
+    async function loadAndRender(geo, textureUrl) {
+        if (!geo || !textureUrl) return;
+        const bones = await loadModelAndTexture(modelContainer, geo, textureDataURL, camera, controls);
+        initDragControls(bones);
         controlsPanel.classList.add("hidden");
         menuToggleBtn.classList.remove("hidden");
     }
@@ -324,11 +334,13 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         //     //     b.name === "jacket"
         // );
         const bonesToRender = geo.bones;
+        const createdBoneGroups = [];
 
         for (const boneData of bonesToRender) {
             const boneGroup = new THREE.Group();
             boneGroup.name = boneData.name;
             allBones.set(boneData.name, boneGroup);
+            createdBoneGroups.push(boneGroup);
 
             const pivot = [...(boneData.pivot || [0, 0, 0])];
             const rotation = [...(boneData.rotation || [0, 0, 0])];
@@ -428,6 +440,7 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         camera.position.set(center.x - cameraDist * 0.5, center.y + cameraDist * 0.5, center.z + cameraDist * 0.5);
         controls.target.copy(center);
         controls.update();
+        return createdBoneGroups;
     } catch (error) {
         console.error("Gagal memuat model:", error);
         alert("Terjadi error saat memuat model. Cek console (F12) untuk detail.");
