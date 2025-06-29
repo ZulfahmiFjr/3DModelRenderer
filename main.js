@@ -40,12 +40,11 @@ function main() {
     const mouse = new THREE.Vector2();
     let draggableObjects = [];
     let selectionBoxHelper = null;
-
     const transformControls = new TransformControls(camera, renderer.domElement);
     scene.add(transformControls);
 
     transformControls.addEventListener("dragging-changed", function (event) {
-        orbitControls.enabled = !event.value;
+        controls.enabled = !event.value;
     });
 
     transformControls.addEventListener("objectChange", function () {
@@ -54,35 +53,42 @@ function main() {
             transformControls.object.position.y = Math.round(transformControls.object.position.y);
             transformControls.object.position.z = Math.round(transformControls.object.position.z);
         }
-        if (selectionBoxHelper) {
-            selectionBoxHelper.update();
-        }
     });
 
     window.addEventListener("pointerdown", function (event) {
+        if (transformControls.dragging === true) return;
         if (event.target !== renderer.domElement) return;
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(draggableObjects, true);
+        const intersects = raycaster.intersectObjects(modelContainer.children, true);
         if (intersects.length > 0) {
             let object = intersects[0].object;
-            while (object.parent && !draggableObjects.includes(object)) {
+            let targetBone = null;
+            while (object.parent) {
+                if (draggableObjects.includes(object)) {
+                    targetBone = object;
+                    break;
+                }
                 object = object.parent;
             }
-            if (transformControls.object !== object) {
-                transformControls.attach(object);
+            if (targetBone) {
+                recenterPivot(targetBone);
+                ransformControls.attach(targetBone);
                 if (selectionBoxHelper) scene.remove(selectionBoxHelper);
-                selectionBoxHelper = new THREE.BoxHelper(object, 0xffff00);
+                selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
                 scene.add(selectionBoxHelper);
             }
         } else {
             if (transformControls.object) {
                 transformControls.detach();
-                scene.remove(selectionBoxHelper);
-                selectionBoxHelper.dispose();
-                selectionBoxHelper = null;
+                if (selectionBoxHelper) {
+                    scene.remove(selectionBoxHelper);
+                    selectionBoxHelper.dispose();
+                    selectionBoxHelper = null;
+                }
             }
         }
     });
@@ -345,12 +351,27 @@ function main() {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
         }
+        if (selectionBoxHelper) {
+            selectionBoxHelper.update();
+        }
 
         controls.update();
         renderer.render(scene, camera);
     }
 
     animate();
+}
+
+function recenterPivot(object) {
+    const worldCenter = new THREE.Vector3();
+    new THREE.Box3().setFromObject(object).getCenter(worldCenter);
+    const localCenter = object.worldToLocal(worldCenter.clone());
+    if (localCenter.lengthSq() === 0) return;
+    for (const child of object.children) {
+        child.position.sub(localCenter);
+    }
+    const offsetInParentSpace = localCenter.clone().applyQuaternion(object.quaternion);
+    object.position.add(offsetInParentSpace);
 }
 
 function resizeRendererToDisplaySize(renderer) {
