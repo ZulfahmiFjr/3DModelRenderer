@@ -48,41 +48,80 @@ function main() {
         orbitControls.enabled = !event.value;
     });
 
-    // let selectionBoxHelper = null;
-    let dragControls;
-    function initDragControls(draggableObjects) {
-        if (dragControls) {
-            dragControls.deactivate();
-            dragControls.dispose();
+    transformControls.addEventListener("objectChange", function () {
+        if (transformControls.object) {
+            transformControls.object.position.x = Math.round(transformControls.object.position.x);
+            transformControls.object.position.y = Math.round(transformControls.object.position.y);
+            transformControls.object.position.z = Math.round(transformControls.object.position.z);
         }
-        dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
-        dragControls.addEventListener("dragstart", function (event) {
-            controls.enabled = false;
-            if (selectionBoxHelper) {
-                scene.remove(selectionBoxHelper);
-                selectionBoxHelper.dispose();
+        if (selectionBoxHelper) {
+            selectionBoxHelper.update();
+        }
+    });
+
+    window.addEventListener("pointerdown", function (event) {
+        if (event.target !== renderer.domElement) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(draggableObjects, true);
+        if (intersects.length > 0) {
+            let object = intersects[0].object;
+            while (object.parent && !draggableObjects.includes(object)) {
+                object = object.parent;
             }
-            selectionBoxHelper = new THREE.BoxHelper(event.object, 0xffff00); // warna kuning
-            scene.add(selectionBoxHelper);
-        });
-        dragControls.addEventListener("dragend", function (event) {
-            controls.enabled = true;
-            if (selectionBoxHelper) {
+            if (transformControls.object !== object) {
+                transformControls.attach(object);
+                if (selectionBoxHelper) scene.remove(selectionBoxHelper);
+                selectionBoxHelper = new THREE.BoxHelper(object, 0xffff00);
+                scene.add(selectionBoxHelper);
+            }
+        } else {
+            if (transformControls.object) {
+                transformControls.detach();
                 scene.remove(selectionBoxHelper);
                 selectionBoxHelper.dispose();
                 selectionBoxHelper = null;
             }
-        });
+        }
+    });
 
-        dragControls.addEventListener("drag", function (event) {
-            event.object.position.x = Math.round(event.object.position.x);
-            event.object.position.y = Math.round(event.object.position.y);
-            event.object.position.z = Math.round(event.object.position.z);
-            if (selectionBoxHelper) {
-                selectionBoxHelper.update();
-            }
-        });
-    }
+    // let selectionBoxHelper = null;
+    // let dragControls;
+    // function initDragControls(draggableObjects) {
+    //     if (dragControls) {
+    //         dragControls.deactivate();
+    //         dragControls.dispose();
+    //     }
+    //     dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
+    //     dragControls.addEventListener("dragstart", function (event) {
+    //         controls.enabled = false;
+    //         if (selectionBoxHelper) {
+    //             scene.remove(selectionBoxHelper);
+    //             selectionBoxHelper.dispose();
+    //         }
+    //         selectionBoxHelper = new THREE.BoxHelper(event.object, 0xffff00); // warna kuning
+    //         scene.add(selectionBoxHelper);
+    //     });
+    //     dragControls.addEventListener("dragend", function (event) {
+    //         controls.enabled = true;
+    //         if (selectionBoxHelper) {
+    //             scene.remove(selectionBoxHelper);
+    //             selectionBoxHelper.dispose();
+    //             selectionBoxHelper = null;
+    //         }
+    //     });
+
+    //     dragControls.addEventListener("drag", function (event) {
+    //         event.object.position.x = Math.round(event.object.position.x);
+    //         event.object.position.y = Math.round(event.object.position.y);
+    //         event.object.position.z = Math.round(event.object.position.z);
+    //         if (selectionBoxHelper) {
+    //             selectionBoxHelper.update();
+    //         }
+    //     });
+    // }
 
     const jsonInput = document.getElementById("jsonFile");
     const textureInput = document.getElementById("textureFile");
@@ -173,12 +212,22 @@ function main() {
     //     }
     // });
 
+    // async function loadAndRender(geo, textureUrl) {
+    //     if (!geo || !textureUrl) return;
+    //     const bones = await loadModelAndTexture(modelContainer, geo, textureUrl, camera, controls);
+    //     initDragControls(bones);
+    //     controlsPanel.classList.add("hidden");
+    //     menuToggleBtn.classList.remove("hidden");
+    // }
+
     async function loadAndRender(geo, textureUrl) {
         if (!geo || !textureUrl) return;
-        const bones = await loadModelAndTexture(modelContainer, geo, textureDataURL, camera, controls);
-        initDragControls(bones);
-        controlsPanel.classList.add("hidden");
-        menuToggleBtn.classList.remove("hidden");
+        const bones = await loadModelAndTexture(modelContainer, geo, textureUrl, camera, controls);
+        draggableObjects = bones;
+        if (!controlsPanel.classList.contains("hidden")) {
+            controlsPanel.classList.add("hidden");
+            menuToggleBtn.classList.remove("hidden");
+        }
     }
 
     menuToggleBtn.addEventListener("click", () => {
