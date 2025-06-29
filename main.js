@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DragControls } from "three/addons/controls/DragControls.js";
+import { TransformControls } from "three/addons/controls/TransformControls.js";
 
 function main() {
     const canvas = document.querySelector("#c");
@@ -35,7 +36,19 @@ function main() {
     //modelContainer.rotation.z = Math.PI;
     scene.add(modelContainer);
 
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let draggableObjects = [];
     let selectionBoxHelper = null;
+
+    const transformControls = new TransformControls(camera, renderer.domElement);
+    scene.add(transformControls);
+
+    transformControls.addEventListener("dragging-changed", function (event) {
+        orbitControls.enabled = !event.value;
+    });
+
+    // let selectionBoxHelper = null;
     let dragControls;
     function initDragControls(draggableObjects) {
         if (dragControls) {
