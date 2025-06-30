@@ -76,7 +76,7 @@ function main() {
             }
             if (targetBone) {
                 recenterPivot(targetBone);
-                ransformControls.attach(targetBone);
+                transformControls.attach(targetBone);
                 if (selectionBoxHelper) scene.remove(selectionBoxHelper);
                 selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
                 scene.add(selectionBoxHelper);
