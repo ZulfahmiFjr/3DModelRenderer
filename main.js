@@ -3,6 +3,10 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 // import { DragControls } from "three/addons/controls/DragControls.js";
 
+const boneMenuContainer = document.getElementById("bone-menu-container");
+const boneList = document.getElementById("bone-list");
+let boneMap = new Map();
+
 function main() {
     const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, preserveDrawingBuffer: true });
@@ -75,11 +79,12 @@ function main() {
                 object = object.parent;
             }
             if (targetBone) {
-                recenterPivot(targetBone);
-                transformControls.attach(targetBone);
-                if (selectionBoxHelper) scene.remove(selectionBoxHelper);
-                selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
-                scene.add(selectionBoxHelper);
+                // recenterPivot(targetBone);
+                // transformControls.attach(targetBone);
+                // if (selectionBoxHelper) scene.remove(selectionBoxHelper);
+                // selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
+                // scene.add(selectionBoxHelper);
+                selectBoneByName(targetBone.name);
             }
         } else {
             if (transformControls.object) {
@@ -89,6 +94,7 @@ function main() {
                     selectionBoxHelper.dispose();
                     selectionBoxHelper = null;
                 }
+                document.querySelectorAll(".bone-item.active").forEach((item) => item.classList.remove("active"));
             }
         }
     });
@@ -139,6 +145,7 @@ function main() {
     const closeControlsBtn = document.getElementById("close-controls");
     const geometrySelectorGroup = document.getElementById("geometry-selector-group");
     const geometrySelector = document.getElementById("geometrySelector");
+
     let modelData = null;
     let textureDataURL = null;
 
@@ -210,6 +217,54 @@ function main() {
         };
     }
 
+    function populateBoneMenu(bonesData) {
+        const boneTree = [];
+        const map = new Map();
+        bonesData.forEach((bone) => {
+            map.set(bone.name, { ...bone, children: [] });
+        });
+        map.forEach((boneNode) => {
+            if (boneNode.parent && map.has(boneNode.parent)) {
+                map.get(boneNode.parent).children.push(boneNode);
+            } else {
+                boneTree.push(boneNode);
+            }
+        });
+        boneList.innerHTML = "";
+        createBoneElements(boneTree, boneList, 0);
+    }
+
+    function createBoneElements(bones, parentElement, level) {
+        const basePadding = 12;
+        const indentPerLevel = 15;
+        bones.forEach((bone) => {
+            const boneItem = document.createElement("div");
+            boneItem.className = "bone-item";
+            boneItem.textContent = bone.name;
+            boneItem.style.paddingLeft = basePadding + level * indentPerLevel + "px";
+            boneItem.addEventListener("click", () => {
+                selectBoneByName(bone.name);
+            });
+            parentElement.appendChild(boneItem);
+            if (bone.children.length > 0) {
+                createBoneElements(bone.children, parentElement, level + 1);
+            }
+        });
+    }
+
+    function selectBoneByName(boneName) {
+        const targetBone = boneMap.get(boneName);
+        if (!targetBone) return;
+        recenterPivot(targetBone);
+        transformControls.attach(targetBone);
+        if (selectionBoxHelper) scene.remove(selectionBoxHelper);
+        selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
+        scene.add(selectionBoxHelper);
+        document.querySelectorAll(".bone-item").forEach((item) => {
+            item.classList.toggle("active", item.textContent === boneName);
+        });
+    }
+
     // geometrySelector.addEventListener("change", (event) => {
     //     const selectedIndex = event.target.value;
     //     if (selectedIndex !== "") {
@@ -230,6 +285,10 @@ function main() {
         if (!geo || !textureUrl) return;
         const bones = await loadModelAndTexture(modelContainer, geo, textureUrl, camera, controls);
         draggableObjects = bones;
+        if (geo.bones && geo.bones.length > 0) {
+            populateBoneMenu(geo.bones);
+            boneMenuContainer.classList.remove("hidden");
+        }
         if (!controlsPanel.classList.contains("hidden")) {
             controlsPanel.classList.add("hidden");
             menuToggleBtn.classList.remove("hidden");
@@ -363,6 +422,7 @@ function main() {
 }
 
 function recenterPivot(object) {
+    if (object.children.length === 0) return;
     const worldCenter = new THREE.Vector3();
     new THREE.Box3().setFromObject(object).getCenter(worldCenter);
     const localCenter = object.worldToLocal(worldCenter.clone());
@@ -419,12 +479,21 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         //     //     b.name === "rightSleeve" ||
         //     //     b.name === "jacket"
         // );
+        boneMap.clear();
+        boneList.innerHTML = "";
+        boneMenuContainer.classList.add("hidden");
+
         const bonesToRender = geo.bones;
         const createdBoneGroups = [];
 
         for (const boneData of bonesToRender) {
+            if (boneData.pivot) {
+                boneData.pivot[0] *= -1;
+                boneData.pivot[2] *= -1;
+            }
             const boneGroup = new THREE.Group();
             boneGroup.name = boneData.name;
+            boneMap.set(boneData.name, boneGroup);
             allBones.set(boneData.name, boneGroup);
             createdBoneGroups.push(boneGroup);
 

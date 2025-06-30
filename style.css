@@ -168,6 +168,49 @@ body {
     text-align: center;
 }
 
+.bone-list-style {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bone-item {
+    padding: 8px 12px;
+    margin: 2px 0;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bone-item:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.bone-item.active {
+    background-color: rgba(0, 122, 255, 0.5);
+    font-weight: 500;
+}
+
+/* .bone-item[data-level="1"] {
+    padding-left: 24px;
+}
+.bone-item[data-level="2"] {
+    padding-left: 36px;
+}
+.bone-item[data-level="3"] {
+    padding-left: 48px;
+}
+.bone-item[data-level="4"] {
+    padding-left: 60px;
+} */
+
 #loadBtn {
     background: linear-gradient(to right, #007aff, #0051ff);
 }
