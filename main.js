@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { DragControls } from "three/addons/controls/DragControls.js";
-import { TransformControls } from "three/addons/controls/TransformControls.js";
 
 function main() {
     const canvas = document.querySelector("#c");
@@ -35,99 +33,6 @@ function main() {
     modelContainer.scale.set(-1, 1, 1);
     //modelContainer.rotation.z = Math.PI;
     scene.add(modelContainer);
-
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let draggableObjects = [];
-    let selectionBoxHelper = null;
-    const transformControls = new TransformControls(camera, renderer.domElement);
-    scene.add(transformControls);
-
-    transformControls.addEventListener("dragging-changed", function (event) {
-        controls.enabled = !event.value;
-    });
-
-    transformControls.addEventListener("objectChange", function () {
-        if (transformControls.object) {
-            transformControls.object.position.x = Math.round(transformControls.object.position.x);
-            transformControls.object.position.y = Math.round(transformControls.object.position.y);
-            transformControls.object.position.z = Math.round(transformControls.object.position.z);
-        }
-    });
-
-    window.addEventListener("pointerdown", function (event) {
-        if (transformControls.dragging === true) return;
-        if (event.target !== renderer.domElement) return;
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(modelContainer.children, true);
-        if (intersects.length > 0) {
-            let object = intersects[0].object;
-            let targetBone = null;
-            while (object.parent) {
-                if (draggableObjects.includes(object)) {
-                    targetBone = object;
-                    break;
-                }
-                object = object.parent;
-            }
-            if (targetBone) {
-                recenterPivot(targetBone);
-                transformControls.attach(targetBone);
-                if (selectionBoxHelper) scene.remove(selectionBoxHelper);
-                selectionBoxHelper = new THREE.BoxHelper(targetBone, 0xffff00);
-                scene.add(selectionBoxHelper);
-            }
-        } else {
-            if (transformControls.object) {
-                transformControls.detach();
-                if (selectionBoxHelper) {
-                    scene.remove(selectionBoxHelper);
-                    selectionBoxHelper.dispose();
-                    selectionBoxHelper = null;
-                }
-            }
-        }
-    });
-
-    // let selectionBoxHelper = null;
-    // let dragControls;
-    // function initDragControls(draggableObjects) {
-    //     if (dragControls) {
-    //         dragControls.deactivate();
-    //         dragControls.dispose();
-    //     }
-    //     dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
-    //     dragControls.addEventListener("dragstart", function (event) {
-    //         controls.enabled = false;
-    //         if (selectionBoxHelper) {
-    //             scene.remove(selectionBoxHelper);
-    //             selectionBoxHelper.dispose();
-    //         }
-    //         selectionBoxHelper = new THREE.BoxHelper(event.object, 0xffff00); // warna kuning
-    //         scene.add(selectionBoxHelper);
-    //     });
-    //     dragControls.addEventListener("dragend", function (event) {
-    //         controls.enabled = true;
-    //         if (selectionBoxHelper) {
-    //             scene.remove(selectionBoxHelper);
-    //             selectionBoxHelper.dispose();
-    //             selectionBoxHelper = null;
-    //         }
-    //     });
-
-    //     dragControls.addEventListener("drag", function (event) {
-    //         event.object.position.x = Math.round(event.object.position.x);
-    //         event.object.position.y = Math.round(event.object.position.y);
-    //         event.object.position.z = Math.round(event.object.position.z);
-    //         if (selectionBoxHelper) {
-    //             selectionBoxHelper.update();
-    //         }
-    //     });
-    // }
 
     const jsonInput = document.getElementById("jsonFile");
     const textureInput = document.getElementById("textureFile");
@@ -184,7 +89,7 @@ function main() {
 
         if (geometries.length === 1) {
             geometrySelectorGroup.classList.add("hidden");
-            loadAndRender(geometries[0], textureDataURL);
+            loadAndRender(geometries[0]);
         } else {
             populateGeometrySelector(geometries);
             geometrySelectorGroup.classList.remove("hidden");
@@ -201,39 +106,21 @@ function main() {
             option.textContent = identifier;
             geometrySelector.appendChild(option);
         });
-        geometrySelector.onchange = (event) => {
-            const selectedIndex = event.target.value;
-            if (selectedIndex !== "") {
-                const selectedGeo = geometries[selectedIndex];
-                loadAndRender(selectedGeo, textureUrl);
-            }
-        };
     }
 
-    // geometrySelector.addEventListener("change", (event) => {
-    //     const selectedIndex = event.target.value;
-    //     if (selectedIndex !== "") {
-    //         const selectedGeo = modelData["minecraft:geometry"][selectedIndex];
-    //         loadAndRender(selectedGeo);
-    //     }
-    // });
-
-    // async function loadAndRender(geo, textureUrl) {
-    //     if (!geo || !textureUrl) return;
-    //     const bones = await loadModelAndTexture(modelContainer, geo, textureUrl, camera, controls);
-    //     initDragControls(bones);
-    //     controlsPanel.classList.add("hidden");
-    //     menuToggleBtn.classList.remove("hidden");
-    // }
-
-    async function loadAndRender(geo, textureUrl) {
-        if (!geo || !textureUrl) return;
-        const bones = await loadModelAndTexture(modelContainer, geo, textureUrl, camera, controls);
-        draggableObjects = bones;
-        if (!controlsPanel.classList.contains("hidden")) {
-            controlsPanel.classList.add("hidden");
-            menuToggleBtn.classList.remove("hidden");
+    geometrySelector.addEventListener("change", (event) => {
+        const selectedIndex = event.target.value;
+        if (selectedIndex !== "") {
+            const selectedGeo = modelData["minecraft:geometry"][selectedIndex];
+            loadAndRender(selectedGeo);
         }
+    });
+
+    function loadAndRender(geo) {
+        if (!geo || !textureDataURL) return;
+        loadModelAndTexture(modelContainer, geo, textureDataURL, camera, controls);
+        controlsPanel.classList.add("hidden");
+        menuToggleBtn.classList.remove("hidden");
     }
 
     menuToggleBtn.addEventListener("click", () => {
@@ -351,27 +238,12 @@ function main() {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
         }
-        if (selectionBoxHelper) {
-            selectionBoxHelper.update();
-        }
 
         controls.update();
         renderer.render(scene, camera);
     }
 
     animate();
-}
-
-function recenterPivot(object) {
-    const worldCenter = new THREE.Vector3();
-    new THREE.Box3().setFromObject(object).getCenter(worldCenter);
-    const localCenter = object.worldToLocal(worldCenter.clone());
-    if (localCenter.lengthSq() === 0) return;
-    for (const child of object.children) {
-        child.position.sub(localCenter);
-    }
-    const offsetInParentSpace = localCenter.clone().applyQuaternion(object.quaternion);
-    object.position.add(offsetInParentSpace);
 }
 
 function resizeRendererToDisplaySize(renderer) {
@@ -420,13 +292,11 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         //     //     b.name === "jacket"
         // );
         const bonesToRender = geo.bones;
-        const createdBoneGroups = [];
 
         for (const boneData of bonesToRender) {
             const boneGroup = new THREE.Group();
             boneGroup.name = boneData.name;
             allBones.set(boneData.name, boneGroup);
-            createdBoneGroups.push(boneGroup);
 
             const pivot = [...(boneData.pivot || [0, 0, 0])];
             const rotation = [...(boneData.rotation || [0, 0, 0])];
@@ -526,7 +396,6 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         camera.position.set(center.x - cameraDist * 0.5, center.y + cameraDist * 0.5, center.z + cameraDist * 0.5);
         controls.target.copy(center);
         controls.update();
-        return createdBoneGroups;
     } catch (error) {
         console.error("Gagal memuat model:", error);
         alert("Terjadi error saat memuat model. Cek console (F12) untuk detail.");
