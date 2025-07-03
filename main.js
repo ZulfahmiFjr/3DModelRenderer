@@ -6,6 +6,9 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 const boneMenuContainer = document.getElementById("bone-menu-container");
 const boneList = document.getElementById("bone-list");
 let boneMap = new Map();
+const undoStack = [];
+const redoStack = [];
+let actionInProgress = null;
 
 function main() {
     const canvas = document.querySelector("#c");
@@ -59,6 +62,38 @@ function main() {
         }
     });
 
+    transformControls.addEventListener("mouseDown", function () {
+        const object = transformControls.object;
+        if (object) {
+            actionInProgress = {
+                boneName: object.name,
+                oldState: {
+                    position: object.position.clone(),
+                    quaternion: object.quaternion.clone(),
+                    scale: object.scale.clone(),
+                },
+            };
+        }
+    });
+
+    transformControls.addEventListener("mouseUp", function () {
+        if (actionInProgress) {
+            const object = boneMap.get(actionInProgress.boneName);
+            if (object) {
+                const oldState = actionInProgress.oldState;
+                const changed =
+                    !object.position.equals(oldState.position) ||
+                    !object.quaternion.equals(oldState.quaternion) ||
+                    !object.scale.equals(oldState.scale);
+                if (changed) {
+                    undoStack.push(actionInProgress);
+                    redoStack.length = 0;
+                }
+            }
+            actionInProgress = null;
+        }
+    });
+
     window.addEventListener("pointerdown", function (event) {
         if (transformControls.dragging === true) return;
         if (event.target !== renderer.domElement) return;
@@ -96,6 +131,17 @@ function main() {
                 }
                 document.querySelectorAll(".bone-item.active").forEach((item) => item.classList.remove("active"));
             }
+        }
+    });
+
+    window.addEventListener("keydown", function (event) {
+        if (event.ctrlKey && event.key.toLowerCase() === "z") {
+            event.preventDefault();
+            undo();
+        }
+        if (event.ctrlKey && event.key.toLowerCase() === "y") {
+            event.preventDefault();
+            redo();
         }
     });
 
@@ -419,6 +465,46 @@ function main() {
     }
 
     animate();
+}
+
+function undo() {
+    if (undoStack.length === 0) return;
+    const action = undoStack.pop();
+    const object = boneMap.get(action.boneName);
+    if (object) {
+        const redoAction = {
+            boneName: object.name,
+            oldState: {
+                position: object.position.clone(),
+                quaternion: object.quaternion.clone(),
+                scale: object.scale.clone(),
+            },
+        };
+        redoStack.push(redoAction);
+        object.position.copy(action.oldState.position);
+        object.quaternion.copy(action.oldState.quaternion);
+        object.scale.copy(action.oldState.scale);
+    }
+}
+
+function redo() {
+    if (redoStack.length === 0) return;
+    const action = redoStack.pop();
+    const object = boneMap.get(action.boneName);
+    if (object) {
+        const undoAction = {
+            boneName: object.name,
+            oldState: {
+                position: object.position.clone(),
+                quaternion: object.quaternion.clone(),
+                scale: object.scale.clone(),
+            },
+        };
+        undoStack.push(undoAction);
+        object.position.copy(action.oldState.position);
+        object.quaternion.copy(action.oldState.quaternion);
+        object.scale.copy(action.oldState.scale);
+    }
 }
 
 function recenterPivot(object) {
