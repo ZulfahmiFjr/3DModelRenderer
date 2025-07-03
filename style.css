@@ -30,6 +30,36 @@ body {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+.bone-toggle-button {
+    position: absolute;
+    top: 20px;
+    z-index: 11;
+    width: 44px;
+    height: 44px;
+    background: rgba(28, 28, 30, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    right: 20px;
+    left: auto;
+}
+
+.bone-toggle-button.hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+}
+
+.bone-toggle-button svg {
+    stroke: #f5f5f7;
+}
+
 .menu-toggle-button.hidden {
     opacity: 0;
     transform: scale(0.8);

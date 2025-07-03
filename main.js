@@ -5,6 +5,8 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 
 const boneMenuContainer = document.getElementById("bone-menu-container");
 const boneList = document.getElementById("bone-list");
+const boneMenuToggle = document.getElementById("bone-menu-toggle");
+const closeBonePanelBtn = document.getElementById("close-bone-panel");
 let boneMap = new Map();
 const undoStack = [];
 const redoStack = [];
@@ -333,7 +335,7 @@ function main() {
         draggableObjects = bones;
         if (geo.bones && geo.bones.length > 0) {
             populateBoneMenu(geo.bones);
-            boneMenuContainer.classList.remove("hidden");
+            boneMenuToggle.classList.remove("hidden");
         }
         if (!controlsPanel.classList.contains("hidden")) {
             controlsPanel.classList.add("hidden");
@@ -349,6 +351,16 @@ function main() {
     closeControlsBtn.addEventListener("click", () => {
         controlsPanel.classList.add("hidden");
         menuToggleBtn.classList.remove("hidden");
+    });
+
+    boneMenuToggle.addEventListener("click", () => {
+        boneMenuContainer.classList.remove("hidden");
+        boneMenuToggle.classList.add("hidden");
+    });
+
+    closeBonePanelBtn.addEventListener("click", () => {
+        boneMenuContainer.classList.add("hidden");
+        boneMenuToggle.classList.remove("hidden");
     });
 
     // loadModelAndTexture(modelContainer);
@@ -568,6 +580,7 @@ async function loadModelAndTexture(parentGroup, geo, textureDataURL, camera, con
         boneMap.clear();
         boneList.innerHTML = "";
         boneMenuContainer.classList.add("hidden");
+        boneMenuToggle.classList.add("hidden");
 
         const bonesToRender = geo.bones;
         const createdBoneGroups = [];
